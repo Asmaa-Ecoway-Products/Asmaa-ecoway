@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.asmaa_ecoway_products.twa",
+        "sha256_cert_fingerprints": ["13:08:4C:47:BF:ED:0B:0F:72:D6:FC:B3:7E:FF:AD:B9:C3:7D:B9:68:43:20:5C:F4:C4:0E:16:32:AF:2E:7C:D0"]
+      }
+    }]

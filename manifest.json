@@ -1,0 +1,69 @@
+{
+  "name": "Asmaa Ecoway Products",
+  "short_name": "Ecoway",
+  "description": "متجرك الأول لكل ما يخص جمالك وعنايتك بمنزلك",
+  "id": "https://asmaa-ecoway-products.github.io/Asmaa-Ecoway-Products/index.html",
+  "start_url": "index.html",
+  "scope": "/Asmaa-Ecoway-Products/",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "browser"],
+  "background_color": "#ffffff",
+  "theme_color": "#4CAF50",
+  "orientation": "portrait",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["shopping"],
+"icons": [
+  {
+    "src": "https://asmaa-ecoway-products.github.io/Asmaa-Ecoway-Products/0.png",
+    "sizes": "192x192",
+    "type": "image/png",
+    "purpose": "any maskable"
+  },
+  {
+    "src": "https://asmaa-ecoway-products.github.io/Asmaa-Ecoway-Products/00.png",
+    "sizes": "512x512",
+    "type": "image/png",
+    "purpose": "any maskable"
+  }
+  ],
+  "screenshots": [
+    {
+      "src": "https://asmaa-ecoway-products.github.io/Asmaa-Ecoway-Products/2.png",
+      "sizes": "379x854",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "الصفحة الرئيسية"
+    },
+        {
+      "src": "https://asmaa-ecoway-products.github.io/Asmaa-Ecoway-Products/3.png",
+      "sizes": "379x852",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "الصفحة الرئيسية"
+    },
+        {
+      "src": "https://asmaa-ecoway-products.github.io/Asmaa-Ecoway-Products/4.png",
+      "sizes": "385x858",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "الصفحة الرئيسية"
+    },
+    {
+      "src": "https://asmaa-ecoway-products.github.io/Asmaa-Ecoway-Products/5.png",
+      "sizes": "382x856",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "فوط التنظيف"
+    },
+
+    {
+      "src": "https://asmaa-ecoway-products.github.io/Asmaa-Ecoway-Products/6.png",
+      "sizes": "381x854",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "العناية بالبشرة"
+    }
+  ],
+  "prefer_related_applications": false
+}

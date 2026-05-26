@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سياسة الاسترجاع والاستبدال - Asmaa Ecoway Products</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Supabase JS & Cart -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="cart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#2d5a27',
+                            light: '#e8f3e8',
+                            gold: '#d4af37',
+                            accent: '#4c8c4a'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                    },
+                    transitionTimingFunction: {
+                        'premium': 'cubic-bezier(0.25, 0.8, 0.25, 1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #fbfbfb;
+            scroll-behavior: smooth;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #2d5a27; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-gray-800 antialiased flex flex-col min-vh-100">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- Logo -->
+            <a href="index.html" class="text-2xl font-bold text-brand-dark flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-brand-accent rounded">
+                <i class="ph-fill ph-leaf text-brand-accent"></i>
+                Asmaa Ecoway Products
+            </a>
+
+            <!-- Desktop Nav -->
+            <nav class="hidden md:flex items-center gap-6 font-semibold text-gray-600">
+                <a href="index.html" class="hover:text-brand-dark transition-colors duration-200">الرئيسية</a>
+                <a href="index.html#categories" class="hover:text-brand-dark transition-colors duration-200">الأقسام</a>
+                <a href="application.html" class="hover:text-brand-dark transition-colors duration-200">انضمي لفريقنا</a>
+            </nav>
+
+            <!-- Icons -->
+            <div class="flex items-center gap-4">
+                <button onclick="toggleCart()" class="text-gray-600 hover:text-brand-dark transition-colors relative focus:outline-none" aria-label="السلة">
+                    <i class="ph ph-shopping-cart text-2xl"></i>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">0</span>
+                </button>
+                <!-- Mobile Menu Toggle -->
+                <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-brand-dark transition-colors focus:outline-none" aria-label="القائمة">
+                    <i class="ph ph-list text-2xl"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobile-nav-overlay" class="fixed inset-0 bg-black/50 z-50 hidden opacity-0 transition-opacity duration-300" aria-hidden="true"></div>
+    <aside id="mobile-nav-drawer" class="fixed top-0 right-0 w-64 h-full bg-white z-50 transform translate-x-full transition-transform duration-300 ease-premium flex flex-col shadow-2xl" aria-expanded="false">
+        <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-brand-light">
+            <h2 class="text-xl font-bold text-brand-dark flex items-center gap-2">
+                <i class="ph-fill ph-leaf text-brand-accent"></i> القائمة
+            </h2>
+            <button id="close-mobile-nav" class="text-gray-500 hover:text-red-500 bg-white rounded-full p-1 shadow-sm transition-colors focus:outline-none">
+                <i class="ph ph-x text-xl"></i>
+            </button>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 font-semibold text-gray-700">
+            <a href="index.html" class="p-2 hover:bg-gray-50 rounded-lg transition-colors">الرئيسية</a>
+            <a href="index.html#categories" class="p-2 hover:bg-gray-50 rounded-lg transition-colors mobile-link">الأقسام</a>
+            <a href="application.html" class="p-2 hover:bg-gray-50 rounded-lg transition-colors mobile-link">انضمي لفريقنا</a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8 md:py-12 max-w-4xl">
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="index.html" class="inline-flex items-center gap-2 text-brand-dark hover:text-brand-accent transition-colors font-bold text-sm bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100 hover:shadow-md">
+                <i class="ph ph-arrow-right"></i>
+                <span>العودة للرئيسية</span>
+            </a>
+        </div>
+
+        <!-- Glassmorphism Banner -->
+        <div class="bg-gradient-to-l from-brand-dark to-brand-accent text-white rounded-3xl p-8 md:p-12 shadow-xl mb-10 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 pointer-events-none">
+                <i class="ph-fill ph-arrows-counter-clockwise absolute -top-5 -left-5 text-[150px] rotate-45"></i>
+                <i class="ph-fill ph-shield-check absolute -bottom-10 -right-10 text-[180px] -rotate-12"></i>
+            </div>
+            <div class="relative z-10 flex flex-col md:flex-row items-center gap-6 text-center md:text-right">
+                <div class="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-4xl shrink-0">
+                    <i class="ph ph-arrows-counter-clockwise"></i>
+                </div>
+                <div>
+                    <span class="text-brand-gold font-bold text-sm uppercase tracking-wider block mb-1">خدمة ما بعد البيع</span>
+                    <h1 class="text-3xl md:text-4xl lg:text-5xl font-black">سياسة الاسترجاع والاستبدال</h1>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Cards -->
+        <div class="space-y-6">
+            <!-- Welcome Card -->
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-brand-light text-brand-dark flex items-center justify-center text-2xl shrink-0"><i class="ph-fill ph-heart"></i></div>
+                    <h2 class="text-xl md:text-2xl font-extrabold text-brand-dark">رضاكِ هو أولويتنا</h2>
+                </div>
+                <p class="text-gray-600 leading-relaxed text-base md:text-lg mb-6">
+                    عميلتنا رضاها أولويتنا — لو المنتج وصلك وفيه أي مشكلة، إحنا هنا وهنحلهالك فوراً.
+                </p>
+                
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="ph ph-question text-brand-accent"></i>
+                    <span>متى تقدري ترجعي المنتج؟</span>
+                </h3>
+                <ul class="space-y-3 mb-6 mr-4">
+                    <li class="flex items-start gap-2 text-gray-600">
+                        <i class="ph-fill ph-check-circle text-green-600 mt-1.5 shrink-0"></i>
+                        <span>لو المنتج وصل تالف أو مكسور أو فيه أي عيب.</span>
+                    </li>
+                    <li class="flex items-start gap-2 text-gray-600">
+                        <i class="ph-fill ph-check-circle text-green-600 mt-1.5 shrink-0"></i>
+                        <span>لو المنتج مختلف عن اللي اتطلب تماماً (خطأ في التجهيز).</span>
+                    </li>
+                    <li class="flex items-start gap-2 text-gray-600">
+                        <i class="ph-fill ph-check-circle text-green-600 mt-1.5 shrink-0"></i>
+                        <span>لو ظهر عيب في التصنيع عند الاستلام الأولي.</span>
+                    </li>
+                </ul>
+
+                <div class="bg-orange-50 border-r-4 border-orange-500 rounded-xl p-5 mb-6">
+                    <h4 class="font-bold text-orange-900 flex items-center gap-2 mb-2">
+                        <i class="ph-fill ph-warning-octagon text-xl"></i>
+                        <span>الشرط الوحيد:</span>
+                    </h4>
+                    <p class="text-orange-850 text-sm md:text-base leading-relaxed">
+                        التواصل معانا على الواتساب خلال **48 ساعة** من استلام الأوردر مع إرسال صورة واضحة للمنتج والمشكلة.
+                    </p>
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <i class="ph ph-arrow-left text-brand-accent"></i>
+                    <span>إيه اللي هيحصل بعدين؟</span>
+                </h3>
+                <p class="text-gray-600 leading-relaxed text-sm md:text-base mr-4 mb-6">
+                    هنراجع الطلب فوراً ونتواصل معاكِ لاستبدال المنتج مجاناً أو رد المبلغ حسب رغبتك وطبيعة الحالة.
+                </p>
+
+                <!-- WhatsApp Support Link -->
+                <div class="border-t border-gray-100 pt-6 flex justify-center">
+                    <a href="https://wa.me/+201129846584" target="_blank" rel="noopener noreferrer" class="inline-flex bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-3 rounded-full text-base shadow-md transition-all duration-300 hover:-translate-y-1 items-center gap-2">
+                        <i class="ph-fill ph-whatsapp-logo text-xl"></i>
+                        <span>واتساب الشكاوى والاسترجاع: 01129846584</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Unified Footer -->
+    <footer class="bg-gradient-to-b from-white to-gray-50 border-t border-gray-200 pt-12 pb-4 relative overflow-hidden mt-12">
+        <div class="absolute inset-0 opacity-5 pointer-events-none">
+            <i class="ph-fill ph-leaf absolute top-10 right-10 text-7xl text-brand-dark rotate-12"></i>
+            <i class="ph-fill ph-plant absolute bottom-10 left-10 text-8xl text-brand-accent -rotate-12"></i>
+        </div>
+        
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12 mb-10">
+                <!-- Column 1 -->
+                <div class="text-center sm:text-right">
+                    <a href="index.html" class="inline-flex items-center justify-center sm:justify-start gap-2 text-2xl font-bold text-brand-dark mb-4">
+                        <i class="ph-fill ph-leaf text-3xl text-brand-accent"></i>
+                        <span>Asmaa Ecoway Products</span>
+                    </a>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-4 max-w-xs mx-auto sm:mx-0">
+                        متجرك الأول لكل ما يخص جمالك وعنايتك بمنزلك. منتجات موثوقة وجودة عالية مع ضمان الoriginal.
+                    </p>
+                    <div class="flex gap-3 justify-center sm:justify-start">
+                        <a href="https://www.facebook.com/share/1AdTZqxxoV/" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-dark hover:bg-brand-dark hover:text-white transition-all duration-300 hover:-translate-y-1 shadow-sm"><i class="ph-fill ph-facebook-logo text-lg"></i></a>
+                        <a href="https://www.instagram.com/asmaa_ecoway_products?igsh=MWszYjgzNHZpeXh4Yw==" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-dark hover:bg-brand-dark hover:text-white transition-all duration-300 hover:-translate-y-1 shadow-sm"><i class="ph-fill ph-instagram-logo text-lg"></i></a>
+                        <a href="https://wa.me/+201129846584" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-dark hover:bg-brand-dark hover:text-white transition-all duration-300 hover:-translate-y-1 shadow-sm"><i class="ph-fill ph-whatsapp-logo text-lg"></i></a>
+                        <a href="https://www.tiktok.com/@asmaamohamed86031?_r=1&_t=ZS-94PD08qHUgq" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-dark hover:bg-brand-dark hover:text-white transition-all duration-300 hover:-translate-y-1 shadow-sm"><i class="ph-fill ph-tiktok-logo text-lg"></i></a>
+                    </div>
+                </div>
+                
+                <!-- Column 2 -->
+                <div class="text-center sm:text-right">
+                    <h4 class="font-extrabold text-gray-800 mb-4 text-lg border-b-2 border-brand-light pb-2 inline-block">روابط سريعة</h4>
+                    <ul class="space-y-3 text-gray-600 text-sm">
+                        <li><a href="index.html" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> الرئيسية</a></li>
+                        <li><a href="index.html#categories" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> الأقسام</a></li>
+                        <li><a href="about.html" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> تعرفي علينا</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Column 3 -->
+                <div class="text-center sm:text-right">
+                    <h4 class="font-extrabold text-gray-800 mb-4 text-lg border-b-2 border-brand-light pb-2 inline-block">خدمة العملاء</h4>
+                    <ul class="space-y-3 text-gray-600 text-sm">
+                        <li><a href="refund.html" class="text-brand-dark font-bold hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> سياسة الاسترجاع</a></li>
+                        <li><a href="shipping.html" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> الشحن والتوصيل</a></li>
+                        <li><a href="faq.html" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> الأسئلة الشائعة</a></li>
+                        <li><a href="warranty.html" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> الضمان</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Bottom bar -->
+            <div class="border-t border-gray-200 pt-6 mt-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-gray-500">
+                <div>© 2024 متجر Asmaa Ecoway Products. جميع الحقوق محفوظة.</div>
+                <div class="flex items-center gap-1 bg-brand-light/50 px-3 py-1.5 rounded-full">
+                    <span class="text-gray-600">تم إنشاء الموقع بواسطة</span>
+                    <a href="https://mina-samuel-2010.github.io/Mina_Samuel/index.html" target="_blank" rel="noopener" class="font-bold text-brand-dark hover:text-brand-accent transition-colors underline underline-offset-2">
+                        مينا صموئيل
+                    </a>
+                    <i class="ph-fill ph-code text-brand-accent mr-1"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Fixed WhatsApp Button -->
+    <a href="https://wa.me/+201129846584" target="_blank" rel="noopener noreferrer" 
+       class="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-lg transition-all duration-300 ease-premium hover:-translate-y-2 hover:shadow-2xl flex items-center gap-3 group"
+       aria-label="تواصل معنا عبر واتساب">
+        <i class="ph-fill ph-whatsapp-logo text-3xl"></i>
+        <span class="absolute right-full ml-2 px-3 py-1.5 bg-white text-gray-700 rounded-lg shadow-md text-sm font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+            خدمة العملاء
+        </span>
+    </a>
+
+    <script>
+        // Initialize Mobile Nav
+        function initMobileNav() {
+            const menuBtn = document.getElementById('mobile-menu-btn');
+            const closeBtn = document.getElementById('close-mobile-nav');
+            const overlay = document.getElementById('mobile-nav-overlay');
+            const drawer = document.getElementById('mobile-nav-drawer');
+
+            if (menuBtn) {
+                menuBtn.addEventListener('click', () => {
+                    drawer.classList.remove('translate-x-full');
+                    drawer.setAttribute('aria-expanded', 'true');
+                    overlay.classList.remove('hidden');
+                    setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                    document.body.style.overflow = 'hidden';
+                });
+            }
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    drawer.classList.add('translate-x-full');
+                    drawer.setAttribute('aria-expanded', 'false');
+                    overlay.classList.add('opacity-0');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                    document.body.style.overflow = '';
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    drawer.classList.add('translate-x-full');
+                    drawer.setAttribute('aria-expanded', 'false');
+                    overlay.classList.add('opacity-0');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                    document.body.style.overflow = '';
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initMobileNav();
+        });
+    </script>
+</body>
+</html>

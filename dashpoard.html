@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل المنتج | Asmaa Ecoway</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; scroll-behavior: smooth; }
+        .product-gradient { background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Navbar بسيط -->
+    <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="index.html" class="text-xl font-black text-green-700">ASMAA ECOWAY</a>
+            <a href="index.html" class="text-gray-600 hover:text-green-600 font-bold transition-colors">العودة للمتجر</a>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto p-4 md:p-10">
+        <div id="product-content" class="bg-white rounded-3xl shadow-2xl shadow-green-900/5 overflow-hidden border border-gray-100">
+            <!-- حالة التحميل الافتراضية -->
+            <div id="loading-spinner" class="p-20 text-center">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent mb-4"></div>
+                <p class="text-gray-500 font-bold">جاري تحميل تفاصيل المنتج...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. لقد وضعت لك الـ KEY الذي أرفقته هنا.
+        // ⚠️ يجب عليك استبدال 'YOUR_PROJECT_URL' بالرابط الحقيقي من إعدادات Supabase (Settings -> API -> Project URL)
+        const SUPABASE_URL = 'https://oybviqlrlsprjrhjftvs.supabase.co'; // تم التخمين بناءً على الـ Key، يرجى التأكد منه
+        
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95YnZpcWxybHNwcmpyaGpmdHZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODgyMzAsImV4cCI6MjA5MjU2NDIzMH0.rPDNAZe9DNTi3eQd3L_lnLrEgQ8g8uwr6GAWhnydVIc';
+
+        const contentDiv = document.getElementById('product-content');
+
+        async function initProductPage() {
+            // التحقق من أن المستخدم قام بتغيير الرابط
+            if (SUPABASE_URL.includes('https://oybviqlrlsprjrhjftvs.supabase.co')) {
+                showErrorMessage("تنبيه: يرجى وضع رابط مشروع Supabase (URL) في كود الصفحة لتعمل.");
+                return;
+            }
+
+            try {
+                // إنشاء العميل
+                const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                
+                // جلب الـ ID من الرابط
+                const params = new URLSearchParams(window.location.search);
+                const pid = params.get('id');
+
+                if (!pid) {
+                    showErrorMessage("عذراً، لم يتم العثور على رقم المنتج في الرابط.");
+                    return;
+                }
+
+                // جلب البيانات
+                const { data: product, error } = await _supabase
+                    .from('products')
+                    .select('*')
+                    .eq('id', pid)
+                    .single();
+
+                if (error || !product) throw new Error("Product not found");
+
+                renderProduct(product);
+
+            } catch (err) {
+                console.error(err);
+                showErrorMessage("عذراً، حدث خطأ أثناء تحميل بيانات المنتج. تأكد من صحة الرابط أو وجود المنتج في قاعدة البيانات.");
+            }
+        }
+
+        function renderProduct(p) {
+            contentDiv.innerHTML = `
+                <div class="flex flex-col md:flex-row">
+                    <!-- قسم الصورة -->
+                    <div class="md:w-1/2 relative group bg-gray-100">
+                        <img src="${p.image_url}" class="w-full h-full object-cover min-h-[400px] max-h-[600px] transition-transform duration-500 group-hover:scale-105" alt="${p.name}">
+                        <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-sm">
+                            <span class="text-green-700 font-bold text-sm">${p.category}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- قسم البيانات -->
+                    <div class="md:w-1/2 p-8 md:p-12 flex flex-col justify-center product-gradient">
+                        <nav class="mb-6 flex gap-2 text-sm text-gray-400 font-bold">
+                            <a href="index.html" class="hover:text-green-600">الرئيسية</a>
+                            <span>/</span>
+                            <span class="text-gray-600">${p.category}</span>
+                        </nav>
+
+                        <h1 class="text-4xl md:text-5xl font-black text-gray-800 mb-6 leading-tight">${p.name}</h1>
+                        
+                        <div class="flex items-center gap-4 mb-8">
+                            <span class="text-4xl font-bold text-green-600">${p.price} <span class="text-lg font-normal text-gray-400 underline">ج.م</span></span>
+                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-bold animate-pulse">متوفر الآن</span>
+                        </div>
+
+                        <div class="prose prose-green mb-10">
+                            <h4 class="text-gray-800 font-bold mb-2">وصف المنتج:</h4>
+                            <p class="text-gray-600 leading-relaxed text-lg">${p.description || 'لا يوجد وصف تفصيلي متوفر حالياً.'}</p>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <button onclick="orderViaWhatsApp('${p.name}')" 
+                                    class="w-full bg-green-600 hover:bg-green-700 text-white py-5 rounded-2xl font-black text-xl shadow-xl shadow-green-200 transition-all active:scale-95 flex items-center justify-center gap-3">
+                                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                اطلب عبر واتساب
+                            </button>
+                            <p class="text-center text-xs text-gray-400">سيتم توجيهك للمحادثة مباشرة مع خدمة العملاء</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showErrorMessage(msg) {
+            contentDiv.innerHTML = `
+                <div class="p-10 text-center w-full">
+                    <div class="bg-red-50 border border-red-100 p-8 rounded-3xl">
+                        <div class="text-red-500 text-5xl mb-4 text-center flex justify-center">⚠️</div>
+                        <h2 class="font-black text-xl text-red-800 mb-2">${msg}</h2>
+                        <a href="index.html" class="mt-4 inline-block text-green-600 font-bold underline">العودة للمتجر</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function orderViaWhatsApp(productName) {
+            const phone = "201202279184"; // رقمك الحقيقي
+            const message = encodeURIComponent(`مرحباً أسماء، أريد طلب منتج: ${productName}. هل هو متوفر؟`);
+            window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+        }
+
+        window.onload = initProductPage;
+    </script>
+</body>
+</html>

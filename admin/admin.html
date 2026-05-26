@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - Asmaa Ecoway</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body class="text-gray-800">
+
+    <!-- Global Loader -->
+    <div id="global-loader" class="fixed inset-0 bg-white/90 z-[100] flex flex-col justify-center items-center hidden backdrop-blur-sm">
+        <div class="loader mb-4"></div>
+        <p class="text-green-800 font-bold text-lg" id="loader-text">جاري التحميل...</p>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-green-50 to-green-100">
+        <div class="bg-white rounded-[2rem] shadow-2xl p-10 w-full max-w-md border border-white">
+            <div class="text-center mb-10">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="ph-fill ph-leaf text-5xl text-green-600"></i>
+                </div>
+                <h1 class="text-3xl font-black text-gray-900">Asmaa Ecoway</h1>
+                <p class="text-gray-500 font-semibold mt-2">لوحة الإدارة والتحكم</p>
+            </div>
+            
+            <form id="login-form" class="space-y-6" onsubmit="event.preventDefault(); window.loginUser();">
+                <div>
+                    <label class="block text-sm font-bold mb-2 text-gray-700">البريد الإلكتروني</label>
+                    <div class="relative">
+                        <i class="ph ph-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
+                        <input type="email" id="email" required class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-white focus:border-transparent outline-none transition-all font-sans" dir="ltr">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-2 text-gray-700">كلمة المرور</label>
+                    <div class="relative">
+                        <i class="ph ph-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
+                        <input type="password" id="password" required class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-white focus:border-transparent outline-none transition-all font-sans" dir="ltr">
+                    </div>
+                </div>
+                <button type="submit" id="login-btn" class="w-full btn-premium text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:-translate-y-1">
+                    تسجيل الدخول
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="admin-panel" class="hidden min-h-screen flex flex-col md:flex-row bg-gray-50">
+        
+        <!-- Sidebar -->
+        <aside class="w-full md:w-64 flex flex-col sticky top-0 md:h-screen z-40">
+            <!-- Sidebar Desktop Header (Hidden on Mobile) -->
+            <div class="p-6 border-b border-white/5 flex items-center justify-center">
+                <div class="flex items-center gap-3">
+                    <i class="ph-fill ph-leaf text-3xl text-green-400"></i>
+                    <h1 class="text-xl font-black text-white">Ecoway Admin</h1>
+                </div>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <nav id="nav-menu" class="flex-1 p-4 hidden md:block space-y-2">
+                <a href="#" id="nav-products" onclick="switchSection('products')" class="sidebar-link active flex items-center gap-3 px-4 py-3 text-white rounded-xl font-bold transition-all">
+                    <i class="ph-fill ph-package text-xl"></i>
+                    <span>المنتجات</span>
+                </a>
+                <a href="#" id="nav-featured" onclick="switchSection('featured')" class="sidebar-link flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white rounded-xl font-bold transition-all">
+                    <i class="ph-fill ph-star text-xl"></i>
+                    <span> المميزة</span>
+                </a>
+                <a href="../index.html" target="_blank" class="sidebar-link flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white rounded-xl font-bold transition-all">
+                    <i class="ph-fill ph-storefront text-xl"></i>
+                    <span>زيارة المتجر</span>
+                </a>
+                <!-- Mobile Logout Link (Handled in Bottom Bar on Mobile) -->
+                <a href="#" onclick="logout()" class="sidebar-link md:hidden flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 rounded-xl font-bold transition-all">
+                    <i class="ph-fill ph-sign-out text-xl"></i>
+                    <span>تسجيل الخروج</span>
+                </a>
+            </nav>
+
+            <!-- Sidebar Desktop Footer (Hidden on Mobile) -->
+            <div class="p-4 border-t border-white/5 hidden md:block">
+                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 text-red-400 bg-red-950/30 border border-red-900/30 px-4 py-3 rounded-xl font-bold hover:bg-red-900/40 hover:text-white transition-all duration-200">
+                    <i class="ph-bold ph-sign-out text-xl"></i> تسجيل الخروج
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-8 w-full max-w-7xl mx-auto">
+            
+            <div id="section-products" class="section-pane">
+                <!-- Dashboard Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stats-card bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-2xl"><i class="ph-fill ph-package"></i></div>
+                    <div>
+                        <p class="text-gray-500 text-sm font-bold">إجمالي المنتجات</p>
+                        <h3 class="text-2xl font-black text-gray-900" id="stat-total">0</h3>
+                    </div>
+                </div>
+                <div class="stats-card bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center text-2xl"><i class="ph-fill ph-star"></i></div>
+                    <div>
+                        <p class="text-gray-500 text-sm font-bold">منتجات مميزة</p>
+                        <h3 class="text-2xl font-black text-gray-900" id="stat-featured">0</h3>
+                    </div>
+                </div>
+                <div class="stats-card bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-2xl"><i class="ph-fill ph-warning-circle"></i></div>
+                    <div>
+                        <p class="text-gray-500 text-sm font-bold">نفذت الكمية</p>
+                        <h3 class="text-2xl font-black text-gray-900" id="stat-out">0</h3>
+                    </div>
+                </div>
+                <div class="stats-card bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-2xl"><i class="ph-fill ph-money"></i></div>
+                    <div>
+                        <p class="text-gray-500 text-sm font-bold">قيمة المخزون</p>
+                        <h3 class="text-2xl font-black text-gray-900" id="stat-value">0 ج.م</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <div class="relative w-full sm:w-64">
+                        <i class="ph ph-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                        <input type="text" id="search-input" placeholder="ابحث باسم المنتج..." class="w-full pr-10 pl-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm font-bold">
+                    </div>
+<select id="filter-category" class="w-full sm:w-auto px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm font-bold">
+    <option value="all">جميع الأقسام</option>
+    <option value="featured">منتجات مميزة ⭐</option> <option value="home">فوط التنظيف</option>
+    <option value="skin">تنظيف البشرة</option>
+    <option value="perfume">شنط وعطور</option>
+    <option value="natural">منظفات طبيعية</option>
+    <option value="packages">باكدجات</option>
+</select>
+                </div>
+                <button onclick="showForm()" class="w-full md:w-auto btn-premium text-white px-6 py-2.5 rounded-xl font-bold transition shadow-lg flex items-center justify-center gap-2">
+                    <i class="ph-bold ph-plus"></i> إضافة منتج جديد
+                </button>
+            </div>
+
+            <!-- Add/Edit Form -->
+            <div id="product-form-container" class="hidden bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-gray-100 mb-8 transition-all">
+                <div class="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-green-100 w-10 h-10 rounded-full flex items-center justify-center"><i class="ph-fill ph-package text-xl text-green-700"></i></div>
+                        <h3 id="form-title" class="text-xl font-black text-gray-800">إضافة منتج جديد</h3>
+                    </div>
+                    <button onclick="hideForm()" class="text-gray-400 hover:text-red-500"><i class="ph ph-x text-2xl"></i></button>
+                </div>
+
+                <form id="product-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <input type="hidden" id="product-id">
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">اسم المنتج *</label>
+                        <input type="text" id="p-name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition font-bold">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">السعر (جنيه) *</label>
+                        <input type="number" id="p-price" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition font-bold text-left" dir="ltr">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">القسم *</label>
+<select id="p-category" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition font-bold">
+    <option value="" disabled selected>اختر القسم *</option>
+    <option value="featured">منتجات مميزة ⭐</option>
+    <option value="home">فوط التنظيف</option>
+    <option value="skin">تنظيف البشرة</option>
+    <option value="perfume">شنط وعطور</option>
+    <option value="natural">منظفات طبيعية</option>
+    <option value="packages">باكدجات</option>
+</select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">المخزون (الكمية المتاحة) *</label>
+                        <input type="number" id="p-stock" required min="0" value="1" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition font-bold text-left" dir="ltr">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">مدير الصور (إضافة، ترتيب، حذف)</label>
+                        
+                        <!-- Image Uploader UI -->
+                        <div class="bg-gray-50 border-2 border-dashed border-green-200 rounded-2xl p-6 text-center hover:bg-green-50 transition-colors cursor-pointer relative" id="drop-zone">
+                            <input type="file" id="p-image" accept="image/*" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" title="اختر صور">
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <div class="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-green-600 mb-2">
+                                    <i class="ph-bold ph-upload-simple text-2xl"></i>
+                                </div>
+                                <h4 class="font-bold text-gray-800">اضغط أو اسحب الصور هنا للرفع</h4>
+                                <p class="text-xs text-gray-500 font-semibold">يتم ضغط الصور تلقائياً قبل الرفع لتوفير المساحة</p>
+                            </div>
+                        </div>
+
+                        <!-- Image Preview Grid (Sortable) -->
+                        <div id="image-preview-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 mt-4 empty:hidden">
+                            <!-- Thumbnails will be rendered here -->
+                        </div>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">وصف المنتج</label>
+                        <textarea id="p-desc" rows="3" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition font-semibold"></textarea>
+                    </div>
+
+
+
+                    <div class="md:col-span-2 flex gap-3 pt-4 border-t border-gray-100">
+                        <button type="submit" class="flex-1 sm:flex-none btn-premium text-white px-8 py-3.5 rounded-xl font-bold transition shadow-lg flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-floppy-disk text-xl"></i> حفظ التغييرات
+                        </button>
+                        <button type="button" onclick="hideForm()" class="flex-1 sm:flex-none bg-gray-100 text-gray-700 px-8 py-3.5 rounded-xl font-bold hover:bg-gray-200 transition">
+                            إلغاء
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Products Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="premium-table w-full text-right whitespace-nowrap">
+                        <thead class="bg-gray-50 text-gray-500 text-sm font-bold border-b border-gray-100">
+                            <tr>
+                                <th class="px-6 py-4">المنتج</th>
+                                <th class="px-6 py-4">السعر</th>
+                                <th class="px-6 py-4">القسم</th>
+                                <th class="px-6 py-4 text-center">المخزون</th>
+                                <th class="px-6 py-4 text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-tbody" class="divide-y divide-gray-50 font-semibold">
+                            <!-- JS Injection -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            </div> <!-- End of section-products -->
+
+            <!-- Featured Products Section -->
+            <div id="section-featured" class="section-pane hidden">
+                <!-- Featured Banner -->
+                <div class="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-3xl p-6 md:p-8 border border-yellow-100 shadow-sm mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div>
+                        <h2 class="text-2xl font-black text-amber-900 flex items-center gap-2">
+                            <i class="ph-fill ph-star text-amber-500"></i> إدارة المنتجات المميزة
+                        </h2>
+                        <p class="text-amber-800/80 font-bold mt-2 text-sm leading-relaxed">
+                            هنا يمكنك إدارة وتحديد المنتجات التي تظهر في الواجهة الرئيسية للموقع لزيادة المبيعات والترويج لها.
+                        </p>
+                    </div>
+                    <div class="stats-card bg-white px-6 py-4 rounded-2xl border border-yellow-200/60 shadow-sm flex items-center gap-3 shrink-0">
+                        <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xl">
+                            <i class="ph-fill ph-star"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-bold">العدد الحالي</p>
+                            <h4 class="text-xl font-black text-gray-900" id="featured-count-badge">0</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add to Featured Search Toolbar -->
+                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mb-8 relative">
+                    <label class="block text-sm font-bold text-gray-700 mb-3">البحث وإضافة منتج إلى المنتجات المميزة</label>
+                    <div class="relative max-w-2xl">
+                        <i class="ph ph-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
+                        <input type="text" id="featured-search-add" placeholder="🔍 اكتب اسم المنتج للبحث وإضافته إلى المنتجات المميزة..." class="w-full pr-12 pl-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-base font-bold transition-all" autocomplete="off">
+                        
+                        <!-- Results Dropdown -->
+                        <div id="featured-search-results" class="absolute z-50 w-full bg-white rounded-xl shadow-xl border border-gray-200 mt-2 max-h-64 overflow-y-auto hidden">
+                            <!-- JS Injection -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Featured Products Grid -->
+                <div id="featured-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-fr">
+                    <!-- JS Injection -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

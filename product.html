@@ -1,0 +1,317 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل المنتج - Asmaa Ecoway Products</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="cart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { dark: '#2d5a27', light: '#e8f3e8', gold: '#d4af37', accent: '#4c8c4a' }
+                    },
+                    fontFamily: { sans: ['Cairo', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #fbfbfb; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #2d5a27; border-radius: 10px; }
+
+        .thumbnail { width: 80px; height: 80px; border-radius: 0.75rem; border: 2px solid transparent; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; overflow: hidden; background: #f9f9f9; }
+        .thumbnail:hover { border-color: #4c8c4a; transform: scale(1.05); }
+        .thumbnail.active { border-color: #2d5a27; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .thumbnail img, .main-product-img { width: 100%; height: 100%; object-fit: cover; }
+
+        .image-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.85); backdrop-filter: blur(4px); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); color: #2d5a27; font-size: 1.2rem; z-index: 10; border: none; }
+        .image-nav-btn:hover { background: white; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+        .image-nav-btn.next { left: 10px; }
+        .image-nav-btn.prev { right: 10px; }
+
+        .quantity-btn:active { transform: scale(0.95); }
+
+        /* Cart Drawer */
+        #cart-overlay { transition: opacity 0.3s; }
+        #cart-drawer { transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+    </style>
+</head>
+<body class="text-gray-800 antialiased">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-brand-dark flex items-center gap-2">
+                <i class="ph-fill ph-leaf text-brand-accent"></i> Asmaa Ecoway Products
+            </a>
+            <nav class="hidden md:flex items-center gap-6 font-semibold text-gray-600">
+                <a href="index.html" class="hover:text-brand-dark transition-colors">الرئيسية</a>
+                <a href="index.html#categories" class="hover:text-brand-dark transition-colors">الأقسام</a>
+                <a href="application.html" class="hover:text-brand-dark transition-colors">انضمي لفريقنا</a>
+            </nav>
+            <div class="flex items-center gap-4">
+                <button onclick="toggleCartDrawer()" class="text-gray-600 hover:text-brand-dark relative">
+                    <i class="ph ph-shopping-cart text-2xl"></i>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold hidden">0</span>
+                </button>
+                <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-brand-dark">
+                    <i class="ph ph-list text-2xl"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Loading State -->
+    <main class="container mx-auto px-4 py-6 md:py-10">
+        <div id="product-loading" class="flex flex-col items-center justify-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-green-600 mb-4"></div>
+            <p class="text-gray-500 font-bold">جاري تحميل بيانات المنتج...</p>
+        </div>
+        <div id="product-container" class="hidden"></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-b from-white to-gray-50 border-t border-gray-200 pt-12 pb-4">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
+                <div class="text-center sm:text-right">
+                    <a href="index.html" class="inline-flex items-center gap-2 text-2xl font-bold text-brand-dark mb-4">
+                        <i class="ph-fill ph-leaf text-3xl text-brand-accent"></i> Asmaa Ecoway Products
+                    </a>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-4">متجرك الأول لكل ما يخص جمالك وعنايتك بمنزلك.</p>
+                    <div class="flex gap-3 justify-center sm:justify-start">
+                        <a href="https://www.facebook.com/share/1AdTZqxxoV/" class="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-dark hover:bg-brand-dark hover:text-white transition-all"><i class="ph-fill ph-facebook-logo text-lg"></i></a>
+                        <a href="https://www.instagram.com/asmaa_ecoway_products" class="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-dark hover:bg-brand-dark hover:text-white transition-all"><i class="ph-fill ph-instagram-logo text-lg"></i></a>
+                        <a href="https://wa.me/01129846584" class="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-dark hover:bg-brand-dark hover:text-white transition-all"><i class="ph-fill ph-whatsapp-logo text-lg"></i></a>
+                    </div>
+                </div>
+                <div class="text-center sm:text-right">
+                    <h4 class="font-extrabold text-gray-800 mb-4 text-lg">روابط سريعة</h4>
+                    <ul class="space-y-3 text-gray-600 text-sm">
+                        <li><a href="index.html" class="hover:text-brand-dark transition-colors">الرئيسية</a></li>
+                        <li><a href="index.html#categories" class="hover:text-brand-dark transition-colors">الأقسام</a></li>
+                    </ul>
+                </div>
+                <div class="text-center sm:text-right">
+                    <h4 class="font-extrabold text-gray-800 mb-4 text-lg">خدمة العملاء</h4>
+                    <ul class="space-y-3 text-gray-600 text-sm">
+                        <li><a href="https://wa.me/01129846584" class="hover:text-brand-dark transition-colors">تواصل معنا</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 pt-6 text-center text-xs text-gray-500">
+                © 2024 Asmaa Ecoway Products. جميع الحقوق محفوظة.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Cart Drawer -->
+    <div id="cart-overlay" class="fixed inset-0 bg-black/50 z-40 hidden opacity-0" onclick="toggleCartDrawer()"></div>
+    <div id="cart-drawer" class="fixed top-0 right-0 w-full sm:w-96 h-full bg-white z-50 transform translate-x-full flex flex-col shadow-2xl">
+        <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-green-50">
+            <h2 class="text-xl font-bold text-green-900 flex items-center gap-2"><i class="ph ph-shopping-cart text-2xl"></i> سلة المشتريات</h2>
+            <button onclick="toggleCartDrawer()" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        <div id="cart-items-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50"></div>
+        <div class="p-4 border-t border-gray-200 bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <span class="font-bold text-gray-600">الإجمالي:</span>
+                <span id="cart-total" class="font-black text-xl text-green-700">0 ج.م</span>
+            </div>
+            <a href="checkout.html" class="block w-full bg-[#2d5a27] text-white text-center py-4 rounded-xl font-bold hover:bg-green-800 transition-all shadow-md">إتمام الطلب</a>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Supabase ====================
+        const SUPABASE_URL = 'https://oybviqlrlsprjrhjftvs.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95YnZpcWxybHNwcmpyaGpmdHZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODgyMzAsImV4cCI6MjA5MjU2NDIzMH0.rPDNAZe9DNTi3eQd3L_lnLrEgQ8g8uwr6GAWhnydVIc';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ==================== Unified Cart ====================
+        // Cart is handled by cart.js. We only track the current quantity selector state.
+        let currentQuantity = 1;
+
+        // ==================== Product Page ====================
+        let currentImageIndex = 0;
+        let productImages = [];
+
+        function changeMainImage(index) {
+            if (index < 0) index = productImages.length - 1;
+            if (index >= productImages.length) index = 0;
+            currentImageIndex = index;
+            const el = document.getElementById('main-product-image');
+            if (el) el.src = productImages[currentImageIndex];
+            document.querySelectorAll('.thumb-item').forEach((t, i) => {
+                t.classList.toggle('active', i === currentImageIndex);
+            });
+        }
+
+        function changeQuantity(delta) {
+            const maxStock = parseInt(document.getElementById('product-stock')?.dataset.stock || '99');
+            let newQty = currentQuantity + delta;
+            if (newQty >= 1 && newQty <= maxStock) {
+                currentQuantity = newQty;
+                document.getElementById('product-quantity').textContent = currentQuantity;
+            }
+        }
+
+        async function loadProduct() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            if (!productId) {
+                document.getElementById('product-loading').innerHTML = '<p class="text-red-500 font-bold text-xl py-20 text-center">لم يتم تحديد المنتج. <a href="index.html" class="text-green-700 underline">العودة للرئيسية</a></p>';
+                return;
+            }
+
+            const { data: product, error } = await supabaseClient
+                .from('products')
+                .select('*')
+                .eq('id', productId)
+                .single();
+
+            if (error || !product) {
+                document.getElementById('product-loading').innerHTML = '<p class="text-red-500 font-bold text-xl py-20 text-center">المنتج غير موجود. <a href="index.html" class="text-green-700 underline">العودة للرئيسية</a></p>';
+                return;
+            }
+
+            document.title = product.name + ' - Asmaa Ecoway Products';
+            productImages = (product.images && product.images.length > 0) ? product.images : (product.imageurl ? [product.imageurl] : []);
+            const mainImage = productImages[0] || '';
+            const stock = product.stock !== null ? product.stock : 1;
+            const isOutOfStock = stock <= 0;
+            const categoryNames = { 'home': 'فوط التنظيف', 'skin': 'تنظيف البشرة', 'perfume': 'شنط وعطور', 'natural': 'منظفات طبيعية', 'packages': 'باكدجات' };
+
+            let thumbsHtml = productImages.map((img, i) =>
+                `<div class="thumb-item thumbnail ${i === 0 ? 'active' : ''}" onclick="changeMainImage(${i})"><img src="${img}" alt="صورة ${i + 1}"></div>`
+            ).join('');
+
+            const container = document.getElementById('product-container');
+            container.innerHTML = `
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-4 md:p-8">
+                    <div class="flex flex-col lg:flex-row gap-6 lg:gap-10">
+                        <!-- Image Gallery -->
+                        <div class="lg:w-1/2">
+                            <div class="relative group">
+                                <div class="w-full aspect-square bg-gray-100 rounded-2xl overflow-hidden border border-gray-200">
+                                    <img id="main-product-image" src="${mainImage}" alt="${product.name}" class="main-product-img">
+                                </div>
+                                ${productImages.length > 1 ? `
+                                <button onclick="changeMainImage(currentImageIndex - 1)" class="image-nav-btn prev opacity-0 group-hover:opacity-100 transition-opacity"><i class="ph-bold ph-caret-right"></i></button>
+                                <button onclick="changeMainImage(currentImageIndex + 1)" class="image-nav-btn next opacity-0 group-hover:opacity-100 transition-opacity"><i class="ph-bold ph-caret-left"></i></button>
+                                ` : ''}
+                            </div>
+                            ${productImages.length > 1 ? `<div class="flex gap-2 mt-4 overflow-x-auto pb-2">${thumbsHtml}</div>` : ''}
+                        </div>
+
+                        <!-- Product Info -->
+                        <div class="lg:w-1/2 flex flex-col">
+                            <nav class="text-sm text-gray-500 mb-3 flex gap-1">
+                                <a href="index.html" class="hover:text-brand-dark transition">الرئيسية</a> /
+                                <span class="text-gray-400">${categoryNames[product.category] || product.category}</span> /
+                                <span class="text-brand-dark font-semibold">${product.name}</span>
+                            </nav>
+
+                            <h1 class="text-3xl md:text-4xl font-black text-brand-dark mb-3">${product.name}</h1>
+
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="text-amber-400 text-lg">★★★★★</div>
+                                <span class="text-gray-500 text-sm">(5.0)</span>
+                            </div>
+
+                            <div class="text-3xl font-bold text-brand-accent mb-4">${product.price} <span class="text-base font-normal text-gray-500">جنيه</span></div>
+
+                            <!-- Stock Badge -->
+                            <div class="mb-4">
+                                ${isOutOfStock
+                                    ? '<span class="bg-red-100 text-red-700 px-4 py-2 rounded-full text-sm font-bold inline-flex items-center gap-1"><i class="ph-fill ph-x-circle"></i> نفذ من المخزون</span>'
+                                    : `<span class="bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-bold inline-flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> متوفر (${stock} قطعة)</span>`
+                                }
+                            </div>
+
+                            ${product.description ? `
+                            <div class="bg-brand-light/30 p-5 rounded-xl border-r-4 border-brand-dark mb-6">
+                                <h2 class="text-sm font-bold text-gray-500 mb-2 flex items-center gap-1">
+                                    <i class="ph-fill ph-quotes text-brand-dark"></i> عن هذا المنتج
+                                </h2>
+                                <div class="text-gray-700 leading-relaxed text-base" style="white-space: pre-line;">${product.description}</div>
+                            </div>` : ''}
+
+                            <!-- Quantity -->
+                            <div class="flex items-center gap-4 mb-6 ${isOutOfStock ? 'opacity-50 pointer-events-none' : ''}" id="product-stock" data-stock="${stock}">
+                                <span class="font-semibold text-gray-700">الكمية:</span>
+                                <div class="flex items-center border border-gray-300 rounded-full overflow-hidden bg-white shadow-sm">
+                                    <button onclick="changeQuantity(-1)" class="quantity-btn w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 text-xl">−</button>
+                                    <span id="product-quantity" class="w-12 text-center font-bold text-brand-dark">1</span>
+                                    <button onclick="changeQuantity(1)" class="quantity-btn w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 text-xl">+</button>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col sm:flex-row gap-3 mt-auto">
+                                ${isOutOfStock ? `
+                                    <button disabled class="flex-1 bg-gray-300 text-gray-500 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed text-lg">
+                                        <i class="ph ph-prohibit text-xl"></i> نفذ من المخزون
+                                    </button>
+                                ` : `
+                                    <button onclick="addCurrentProduct()" class="flex-1 bg-[#2d5a27] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-800 active:scale-95 transition-all shadow-md text-lg">
+                                        <i class="ph-bold ph-shopping-cart text-xl"></i> أضف للسلة
+                                    </button>
+                                    <button onclick="buyNow()" class="flex-1 border-2 border-[#2d5a27] text-[#2d5a27] py-3.5 rounded-xl font-bold hover:bg-[#2d5a27] hover:text-white transition-all text-lg">
+                                        شراء الآن
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('product-loading').classList.add('hidden');
+            container.classList.remove('hidden');
+
+            // Store current product data for cart actions
+            window._currentProduct = product;
+        }
+
+        async function addCurrentProduct() {
+            const p = window._currentProduct;
+            if (!p) return;
+            const mainImage = (p.images && p.images.length > 0) ? p.images[0] : (p.imageurl || '');
+            if (window.CartSystem) {
+                await window.CartSystem.addItem({ id: p.id, name: p.name, price: p.price, image: mainImage, quantity: currentQuantity, stock: p.stock });
+            }
+            currentQuantity = 1;
+            const qtyEl = document.getElementById('product-quantity');
+            if (qtyEl) qtyEl.textContent = '1';
+        }
+
+        async function buyNow() {
+            await addCurrentProduct();
+            // Small delay to ensure localStorage is written before navigation
+            setTimeout(() => {
+                window.location.href = 'checkout.html';
+            }, 100);
+        }
+
+        // ==================== Init ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProduct();
+        });
+    </script>
+</body>
+</html>

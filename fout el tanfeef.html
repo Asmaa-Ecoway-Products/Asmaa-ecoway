@@ -1,0 +1,350 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فوط التنظيف · منتجات البيت والمطبخ · </title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Meta Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '967161839144616');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=967161839144616&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+    
+    <!-- Google Fonts: Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Supabase JS & Products Loader -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="products-loader.js?v=1.1"></script>
+    <script src="cart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#2d5a27',
+                            light: '#e8f3e8',
+                            gold: '#d4af37',
+                            accent: '#4c8c4a'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                    },
+                    transitionTimingFunction: {
+                        'premium': 'cubic-bezier(0.25, 0.8, 0.25, 1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #fbfbfb;
+            scroll-behavior: smooth;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #2d5a27; border-radius: 10px; }
+        
+        .product-card {
+            transition: all 0.3s cubic-bezier(0.25,0.8,0.25,1);
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .product-image {
+            transition: transform 0.5s ease;
+            background: linear-gradient(145deg, #f8faf8 0%, #f1f5f1 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .product-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        .product-card:hover .product-image::after {
+            transform: translateX(100%);
+        }
+        .product-card:hover .product-image {
+            transform: scale(1.02);
+        }
+        .home-header {
+            background: linear-gradient(135deg, #e3f2e1 0%, #c8e6c9 50%, #a5d6a7 100%);
+        }
+        .product-card {
+            cursor: pointer;
+            position: relative;
+        }
+        .product-card a {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .product-image {
+            display: block;
+            width: 100%;
+        }
+        .product-card button {
+            position: relative;
+            z-index: 3;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        .product-card button:focus {
+            outline: none;
+        }
+        @media (max-width: 640px) {
+            .product-card {
+                padding: 0.75rem !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-brand-dark flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-brand-accent rounded">
+                <i class="ph-fill ph-leaf text-brand-accent"></i>
+                Asmaa Ecoway Products
+            </a>
+            <nav class="hidden md:flex items-center gap-6 font-semibold text-gray-600">
+                <a href="/" class="text-brand-dark border-b-2 border-brand-dark pb-1">الرئيسية</a>
+                <a href="#categories" class="hover:text-brand-dark transition-colors duration-200">الأقسام</a>
+                <a href="about.html" class="hover:text-brand-dark transition-colors duration-200">تعرفي علينا</a>
+                <a href="application.html" class="hover:text-brand-dark transition-colors duration-200">انضمي لفريقنا</a>
+            </nav>
+
+            <button onclick="toggleCart()" class="text-gray-600 hover:text-brand-dark relative">
+                <i class="ph ph-shopping-cart text-xl md:text-2xl"></i>
+                <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">0</span>
+            </button>
+            <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-brand-dark">
+                <i class="ph ph-list text-xl md:text-2xl"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- موبايل ناف -->
+    <div id="mobile-nav-overlay" class="fixed inset-0 bg-black/50 z-50 hidden opacity-0 transition-opacity duration-300"></div>
+    <aside id="mobile-nav-drawer" class="fixed top-0 right-0 w-64 h-full bg-white z-50 transform translate-x-full transition-transform duration-300 ease-premium shadow-2xl">
+        <div class="p-4 border-b border-gray-100 flex justify-between bg-brand-light">
+            <h2 class="text-xl font-bold text-brand-dark flex items-center gap-2"><i class="ph-fill ph-leaf"></i> القائمة</h2>
+            <button id="close-mobile-nav" class="text-gray-500 hover:text-red-500"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        <nav class="p-4 flex flex-col gap-4 font-semibold">
+                <a href="/" class="text-brand-dark border-b-2 border-brand-dark pb-1">الرئيسية</a>
+                <a href="#categories" class="hover:text-brand-dark transition-colors duration-200">الأقسام</a>
+                <a href="about.html" class="hover:text-brand-dark transition-colors duration-200">تعرفي علينا</a>
+                <a href="application.html" class="hover:text-brand-dark transition-colors duration-200">انضمي لفريقنا</a>
+        </nav>
+    </aside>
+
+    <main class="container mx-auto px-4 py-4 md:py-8">
+        
+        <!-- Page Header -->
+        <section class="mb-6 md:mb-10">
+            <div class="home-header rounded-2xl md:rounded-3xl p-4 md:p-10 shadow-sm border border-green-100 relative overflow-hidden">
+                <i class="ph-fill ph-drop absolute -left-4 top-0 text-6xl md:text-8xl text-brand-dark opacity-10 rotate-12"></i>
+                <i class="ph-fill ph-towel absolute right-10 bottom-0 text-6xl md:text-7xl text-brand-accent opacity-10"></i>
+                <div class="relative z-10 text-center md:text-right">
+                    <nav class="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 flex justify-center md:justify-start gap-1">
+                        <a href="index.html" class="hover:text-brand-dark transition-colors">الرئيسية</a>
+                        <span>/</span>
+                        <a href="#categories" class="hover:text-brand-dark transition-colors">الأقسام</a>
+                        <span>/</span>
+                        <span class="text-brand-dark font-semibold">فوط التنظيف والمنزل</span>
+                    </nav>
+                    <h1 class="text-2xl md:text-5xl font-black text-brand-dark mb-2 md:mb-3 tracking-tight">فوط التنظيف ومنتجات المنزل</h1>
+                    <p class="text-gray-700 text-sm md:text-lg max-w-2xl leading-relaxed font-medium">
+                        اكتشفي مجموعتنا المتميزة من فوط المايكروفايبر عالية الجودة، فوط التنظيف متعددة الاستخدامات، وأدوات العناية بالمنزل.
+                    </p>
+                    <div class="flex flex-wrap gap-2 md:gap-3 mt-3 md:mt-4 justify-center md:justify-start">
+                        <span class="bg-white/80 text-brand-dark px-3 py-1 rounded-full text-xs md:text-sm font-semibold flex items-center gap-1"><i class="ph-fill ph-check-circle text-brand-accent"></i> قابلة للغسيل</span>
+                        <span class="bg-white/80 text-brand-dark px-3 py-1 rounded-full text-xs md:text-sm font-semibold flex items-center gap-1"><i class="ph-fill ph-check-circle text-brand-accent"></i> لا تخدش الأسطح</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Products Grid -->
+        <div id="products-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 auto-rows-fr">
+            <!-- المنتجات سيتم إدراجها هنا ديناميكياً من Supabase -->
+        </div>
+        
+        <!-- زر العودة -->
+        <div class="text-center mt-10">
+            <a href="index.html#categories" class="inline-flex items-center gap-2 bg-white border-2 border-brand-dark text-brand-dark px-8 py-3 rounded-full font-bold hover:bg-brand-dark hover:text-white transition-all duration-300 shadow-md">
+                <i class="ph-bold ph-arrow-right"></i>
+                العودة للأقسام الرئيسية
+            </a>
+        </div>
+    </main>
+
+    <!-- 7. Footer -->
+    <footer class="bg-gradient-to-b from-white to-gray-50 border-t border-gray-200 pt-12 pb-4 relative overflow-hidden">
+        <!-- Decorative subtle leaf pattern -->
+        <div class="absolute inset-0 opacity-5 pointer-events-none">
+            <i class="ph-fill ph-leaf absolute top-10 right-10 text-7xl text-brand-dark rotate-12"></i>
+            <i class="ph-fill ph-plant absolute bottom-10 left-10 text-8xl text-brand-accent -rotate-12"></i>
+        </div>
+        
+        <div class="container mx-auto px-4 relative z-10">
+            <!-- Main footer grid: 4 columns on desktop, stacked on mobile -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-10">
+                <!-- Column 1: Brand & bio -->
+                <div class="text-center sm:text-right">
+                    <a href="/" class="inline-flex items-center justify-center sm:justify-start gap-2 text-2xl font-bold text-brand-dark mb-4">
+                        <i class="ph-fill ph-leaf text-3xl text-brand-accent"></i>
+                        <span>Asmaa Ecoway Products</span>
+                    </a>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-4 max-w-xs mx-auto sm:mx-0">
+                        متجرك الأول لكل ما يخص جمالك وعنايتك بمنزلك. منتجات موثوقة وجودة عالية مع ضمان الoriginal.
+                    </p>
+                    <div class="flex gap-3 justify-center sm:justify-start">
+                        <a href="https://www.facebook.com/share/1AdTZqxxoV/" class="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-dark hover:bg-brand-dark hover:text-white transition-all duration-300 hover:-translate-y-1 shadow-sm"><i class="ph-fill ph-facebook-logo text-lg"></i></a>
+                        <a href="https://www.instagram.com/asmaa_ecoway_products?igsh=MWszYjgzNHZpeXh4Yw==" class="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-dark hover:bg-brand-dark hover:text-white transition-all duration-300 hover:-translate-y-1 shadow-sm"><i class="ph-fill ph-instagram-logo text-lg"></i></a>
+                        <a href="https://wa.me/01129846584" class="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-dark hover:bg-brand-dark hover:text-white transition-all duration-300 hover:-translate-y-1 shadow-sm"><i class="ph-fill ph-whatsapp-logo text-lg"></i></a>
+                        <a href="https://www.tiktok.com/@asmaamohamed86031?_r=1&_t=ZS-94PD08qHUgq" class="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-dark hover:bg-brand-dark hover:text-white transition-all duration-300 hover:-translate-y-1 shadow-sm"><i class="ph-fill ph-tiktok-logo text-lg"></i></a>
+                    </div>
+                </div>
+                
+                <!-- Column 2: Quick links -->
+                <div class="text-center sm:text-right">
+                    <h4 class="font-extrabold text-gray-800 mb-4 text-lg border-b-2 border-brand-light pb-2 inline-block">روابط سريعة</h4>
+                    <ul class="space-y-3 text-gray-600 text-sm">
+                        <li><a href="/" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> الرئيسية</a></li>
+                        <li><a href="#categories" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> الأقسام</a></li>
+
+                        <li><a href="about.html" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> تعرفي علينا</a></li>
+                        <li><a href="application.html" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> انضمي لفريقنا</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Column 3: Customer service -->
+                <div class="text-center sm:text-right">
+                    <h4 class="font-extrabold text-gray-800 mb-4 text-lg border-b-2 border-brand-light pb-2 inline-block">خدمة العملاء</h4>
+                    <ul class="space-y-3 text-gray-600 text-sm">
+                        <li><a href="refund.html" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> سياسة الاسترجاع</a></li>
+                        <li><a href="shipping.html" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> الشحن والتوصيل</a></li>
+                        <li><a href="faq.html" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> الأسئلة الشائعة</a></li>
+                        <li><a href="warranty.html" class="hover:text-brand-dark transition-colors flex items-center gap-2 justify-center sm:justify-start"><i class="ph ph-caret-left text-brand-accent"></i> الضمان</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Bottom bar with copyright and developer credit -->
+            <div class="border-t border-gray-200 pt-6 mt-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-gray-500">
+                <div>© 2024 متجر Asmaa Ecoway Products. جميع الحقوق محفوظة.</div>
+                <div class="flex items-center gap-1 bg-brand-light/50 px-3 py-1.5 rounded-full">
+                    <span class="text-gray-600">تم إنشاء الموقع بواسطة</span>
+                    <a href="https://mina-samuel-2010.github.io/Mina_Samuel/index.html" target="_blank" rel="noopener" class="font-bold text-brand-dark hover:text-brand-accent transition-colors underline underline-offset-2">
+                        مينا صموئيل
+                    </a>
+                    <i class="ph-fill ph-code text-brand-accent mr-1"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // تهيئة الموبايل ناف
+        function initMobileNav() {
+            const menuBtn = document.getElementById('mobile-menu-btn');
+            const closeBtn = document.getElementById('close-mobile-nav');
+            const overlay = document.getElementById('mobile-nav-overlay');
+            const drawer = document.getElementById('mobile-nav-drawer');
+
+            if (menuBtn) {
+                menuBtn.addEventListener('click', () => {
+                    drawer.classList.remove('translate-x-full');
+                    drawer.setAttribute('aria-expanded', 'true');
+                    overlay.classList.remove('hidden');
+                    setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                    document.body.style.overflow = 'hidden';
+                });
+            }
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    drawer.classList.add('translate-x-full');
+                    drawer.setAttribute('aria-expanded', 'false');
+                    overlay.classList.add('opacity-0');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                    document.body.style.overflow = '';
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    drawer.classList.add('translate-x-full');
+                    drawer.setAttribute('aria-expanded', 'false');
+                    overlay.classList.add('opacity-0');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                    document.body.style.overflow = '';
+                });
+            }
+        }
+
+        // بدء التشغيل
+        document.addEventListener('DOMContentLoaded', () => {
+            initMobileNav();
+            // استدعاء دالة جلب المنتجات من Supabase لقسم home
+            renderStoreProducts('products-container', 'home');
+        });
+    </script>
+
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '905565595577443');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=905565595577443&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+
+</body>
+</html>
