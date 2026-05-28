@@ -104,12 +104,12 @@
 
         async validateCartItems() {
             if (this.items.length === 0) return;
-            const ids = this.items.map(item => item.id);
+            const baseIds = this.items.map(item => item.productId || item.id.split('_')[0]);
             const sb = getSupabase();
             if (!sb) return;
 
             try {
-                const { data, error } = await sb.from('products').select('id, name, price, stock').in('id', ids);
+                const { data, error } = await sb.from('products').select('id, name, price, stock, description').in('id', baseIds);
                 if (error) throw error;
 
                 const dbProducts = new Map((data || []).map(p => [p.id, p]));
@@ -119,7 +119,8 @@
 
                 // Filter out deleted products
                 this.items = this.items.filter(item => {
-                    const exists = dbProducts.has(item.id);
+                    const baseId = item.productId || item.id.split('_')[0];
+                    const exists = dbProducts.has(baseId);
                     if (!exists) {
                         removedAny = true;
                         changed = true;
@@ -129,15 +130,32 @@
 
                 // Update prices and check stock limits for existing ones
                 this.items.forEach(item => {
-                    const dbItem = dbProducts.get(item.id);
+                    const baseId = item.productId || item.id.split('_')[0];
+                    const dbItem = dbProducts.get(baseId);
                     if (dbItem) {
-                        const newPrice = Number(dbItem.price);
-                        if (item.price !== newPrice) {
-                            item.price = newPrice;
+                        let finalPrice = Number(dbItem.price);
+                        let dbStock = dbItem.stock !== null && dbItem.stock !== undefined ? dbItem.stock : 999;
+                        
+                        if (item.selectedColor) {
+                            const desc = dbItem.description || '';
+                            const parts = desc.split('===COLOR_VARIATIONS_JSON===');
+                            if (parts.length > 1) {
+                                try {
+                                    const variations = JSON.parse(parts[1].trim());
+                                    const v = variations.find(x => x.name === item.selectedColor.name);
+                                    if (v) {
+                                        finalPrice = Number(dbItem.price) + Number(v.priceDiff || 0);
+                                        dbStock = v.stock !== undefined ? v.stock : 999;
+                                    }
+                                } catch(e) {}
+                            }
+                        }
+                        
+                        if (item.price !== finalPrice) {
+                            item.price = finalPrice;
                             changed = true;
                         }
                         
-                        const dbStock = dbItem.stock !== null && dbItem.stock !== undefined ? dbItem.stock : 999;
                         if (item.stock !== dbStock) {
                             item.stock = dbStock;
                             changed = true;
@@ -180,13 +198,26 @@
             let dbStock = null;
             if (sb) {
                 try {
-                    const { data } = await sb.from('products').select('stock').eq('id', product.id).single();
-                    if (data) dbStock = data.stock;
+                    const { data } = await sb.from('products').select('stock, description').eq('id', product.id).single();
+                    if (data) {
+                        if (product.selectedColor) {
+                            const desc = data.description || '';
+                            const parts = desc.split('===COLOR_VARIATIONS_JSON===');
+                            if (parts.length > 1) {
+                                const variations = JSON.parse(parts[1].trim());
+                                const v = variations.find(x => x.name === product.selectedColor.name);
+                                if (v) dbStock = v.stock;
+                            }
+                        } else {
+                            dbStock = data.stock;
+                        }
+                    }
                 } catch (e) { console.warn('Stock check failed:', e); }
             }
 
+            const itemId = product.id + (product.selectedColor ? '_' + product.selectedColor.name : '');
             const currentStock = dbStock !== null ? dbStock : (product.stock !== undefined ? product.stock : 999);
-            const existingItem = this.items.find(i => i.id === product.id);
+            const existingItem = this.items.find(i => i.id === itemId);
             const currentQtyInCart = existingItem ? existingItem.quantity : 0;
             const addQty = product.quantity || 1;
 
@@ -204,7 +235,8 @@
                 existingItem.quantity += addQty;
             } else {
                 this.items.push({
-                    id: product.id,
+                    id: itemId,
+                    productId: product.id,
                     name: product.name,
                     price: Number(product.price),
                     image: product.image || '',
@@ -237,8 +269,21 @@
                 let dbStock = item.stock || 999;
                 if (sb) {
                     try {
-                        const { data } = await sb.from('products').select('stock').eq('id', productId).single();
-                        if (data) dbStock = data.stock;
+                        const baseId = item.productId || productId.split('_')[0];
+                        const { data } = await sb.from('products').select('stock, description').eq('id', baseId).single();
+                        if (data) {
+                            if (item.selectedColor) {
+                                const desc = data.description || '';
+                                const parts = desc.split('===COLOR_VARIATIONS_JSON===');
+                                if (parts.length > 1) {
+                                    const variations = JSON.parse(parts[1].trim());
+                                    const v = variations.find(x => x.name === item.selectedColor.name);
+                                    if (v) dbStock = v.stock;
+                                }
+                            } else {
+                                dbStock = data.stock;
+                            }
+                        }
                     } catch (e) { }
                 }
                 if (newQty > dbStock) {
@@ -350,7 +395,15 @@
                         <div class="eco-cart-item ${isOutOfStock ? 'opacity-75 border-red-200 bg-red-50/10' : ''}" style="${isOutOfStock ? 'border: 1px solid #fee2e2; background-color: #fef2f255;' : ''}">
                             <img src="${item.image || ''}" alt="${item.name}" onerror="this.style.display='none'">
                             <div class="eco-cart-item-info">
-                                <div class="eco-cart-item-name">${item.name}</div>
+                                <div class="eco-cart-item-name" style="display:flex; flex-direction:column; gap:2px; align-items:flex-start;">
+                                    <span>${item.name}</span>
+                                    ${item.selectedColor ? `
+                                        <div style="display:inline-flex; align-items:center; gap:4px; margin-top:2px; background:#f3f4f6; padding: 2px 8px; border-radius:10px; font-size:10px; font-weight:700; color:#374151;">
+                                            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${item.selectedColor.code}; border:1px solid rgba(0,0,0,0.1);"></span>
+                                            <span>${item.selectedColor.name}</span>
+                                        </div>
+                                    ` : ''}
+                                </div>
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin: 4px 0 2px 0;">
                                     <div class="eco-cart-item-price">${(item.price * (item.quantity || 1)).toFixed(0)} ج.م</div>
                                     ${isOutOfStock ? '<span style="background-color:#fee2e2; color:#dc2626; padding: 2px 8px; border-radius: 6px; font-size:11px; font-weight:800; display:inline-block;">نفذ ❌</span>' : ''}
@@ -411,7 +464,15 @@
                                         ${item.image ? `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover">` : '<i class="ph-fill ph-package"></i>'}
                                     </div>
                                     <div style="flex:1;min-width:0">
-                                        <h4 style="font-weight:700;font-size:13px;color:#1f2937;margin-bottom:4px">${item.name}</h4>
+                                        <h4 style="font-weight:700;font-size:13px;color:#1f2937;margin-bottom:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                            ${item.name}
+                                            ${item.selectedColor ? `
+                                                <span style="display:inline-flex;align-items:center;gap:3px;background:#f3f4f6;padding:1px 6px;border-radius:8px;font-size:10px;color:#4b5563;">
+                                                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background-color:${item.selectedColor.code};"></span>
+                                                    <span>${item.selectedColor.name}</span>
+                                                </span>
+                                            ` : ''}
+                                        </h4>
                                         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
                                             <span style="font-size:12px;color:#9ca3af">الكمية: ${item.quantity || 1}</span>
                                             ${isOutOfStock ? '<span style="font-weight:bold;color:#dc2626;font-size:11px;background-color:#fee2e2;padding:1px 6px;border-radius:4px;">نفذ ❌</span>' : ''}

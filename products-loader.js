@@ -119,7 +119,34 @@ async function renderStoreProducts(containerId, category = null, featuredOnly = 
         return;
     }
 
-    products.forEach(product => {
+    // Decode variations
+    const parsedProducts = products.map(p => {
+        const desc = p.description || '';
+        const separator = '===COLOR_VARIATIONS_JSON===';
+        const parts = desc.split(separator);
+        
+        let cleanDescription = parts[0].trim();
+        let variations = [];
+        let hasVariations = false;
+        
+        if (parts.length > 1) {
+            try {
+                variations = JSON.parse(parts[1].trim());
+                hasVariations = Array.isArray(variations) && variations.length > 0;
+            } catch(e) {
+                console.error("Error parsing variations JSON", e);
+            }
+        }
+        
+        return {
+            ...p,
+            description: cleanDescription,
+            has_variations: hasVariations,
+            variations: variations
+        };
+    });
+
+    parsedProducts.forEach(product => {
         const mainImage = (product.images && product.images.length > 0) ? product.images[0] : (product.imageurl || '');
         const isOutOfStock = product.stock !== null && product.stock !== undefined && product.stock <= 0;
         const isLowStock = !isOutOfStock && product.stock !== null && product.stock <= 5;
@@ -157,6 +184,10 @@ async function renderStoreProducts(containerId, category = null, featuredOnly = 
                     <button disabled class="w-full bg-gray-300 text-gray-500 py-3 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed">
                         <i class="ph ph-prohibit text-xl"></i> نفذت الكمية
                     </button>
+                    ` : (product.has_variations ? `
+                    <a href="product.html?id=${product.id}" class="w-full bg-[#2d5a27] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-800 active:scale-95 transition-all shadow-md hover:shadow-lg text-center">
+                        <i class="ph ph-palette text-xl"></i> اختر اللون
+                    </a>
                     ` : `
                     <button class="eco-add-to-cart-btn w-full bg-[#2d5a27] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-800 active:scale-95 transition-all shadow-md hover:shadow-lg"
                         data-product-id="${product.id}"
@@ -166,7 +197,7 @@ async function renderStoreProducts(containerId, category = null, featuredOnly = 
                         data-product-stock="${product.stock || 999}">
                         <i class="ph ph-shopping-cart-simple text-xl"></i> أضف للسلة
                     </button>
-                    `}
+                    `)}
                 </div>
             </div>
         `;

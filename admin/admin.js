@@ -299,6 +299,149 @@ document.getElementById('p-image')?.addEventListener('change', async function(e)
     }
 });
 
+// ==================== Color Variations Management Logic ====================
+window.toggleVariationsSection = function(checked) {
+    const section = document.getElementById('variations-section');
+    if (!section) return;
+    if (checked) {
+        section.classList.remove('hidden');
+        const container = document.getElementById('variations-container');
+        if (container && container.children.length === 0) {
+            window.addVariationRow(); // Add an empty color card by default
+        }
+    } else {
+        section.classList.add('hidden');
+    }
+};
+
+window.addVariationRow = function(data = null) {
+    const container = document.getElementById('variations-container');
+    if (!container) return;
+    
+    const card = document.createElement('div');
+    card.className = 'variation-card bg-white p-5 rounded-2xl border border-gray-200 shadow-sm relative group';
+    
+    const name = data ? (data.name || '') : '';
+    const code = data ? (data.code || '#000000') : '#000000';
+    const stock = data ? (data.stock !== undefined ? data.stock : 10) : 10;
+    const sku = data ? (data.sku || '') : '';
+    const priceDiff = data ? (data.priceDiff !== undefined ? data.priceDiff : 0) : 0;
+    const images = data ? (data.images || []) : [];
+    
+    card.innerHTML = `
+        <div class="absolute top-4 left-4">
+            <button type="button" onclick="window.removeVariationRow(this)" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center" title="حذف هذا اللون">
+                <i class="ph-bold ph-trash"></i>
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <!-- Color Name -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">اسم اللون *</label>
+                <input type="text" value="${name}" class="v-name w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-xs font-bold" required placeholder="مثال: أسود، أبيض">
+            </div>
+            <!-- Color Picker & HEX -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">كود اللون (HEX) *</label>
+                <div class="flex gap-2">
+                    <input type="color" value="${code}" class="v-color-picker w-9 h-9 p-0 bg-transparent border-0 cursor-pointer rounded-lg shrink-0" oninput="this.nextElementSibling.value = this.value">
+                    <input type="text" value="${code}" class="v-color-hex w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-xs font-bold" required placeholder="#000000" oninput="this.previousElementSibling.value = this.value">
+                </div>
+            </div>
+            <!-- Stock -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">كمية المخزون *</label>
+                <input type="number" min="0" value="${stock}" class="v-stock w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-xs font-bold text-left" dir="ltr" required>
+            </div>
+            <!-- SKU -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">رمز الـ SKU (اختياري)</label>
+                <input type="text" value="${sku}" class="v-sku w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-xs font-bold" placeholder="رمز المخزون">
+            </div>
+            <!-- Price Difference -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">فرق السعر (اختياري)</label>
+                <input type="number" value="${priceDiff}" class="v-price-diff w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-xs font-bold text-left" dir="ltr">
+            </div>
+        </div>
+        
+        <!-- Image Gallery for Variation -->
+        <div class="mt-4 border-t border-gray-100 pt-3">
+            <label class="block text-xs font-bold text-gray-500 mb-2">صور اللون الخاص بالمتغير</label>
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Add Image Button -->
+                <div class="relative w-20 h-20 bg-green-50/50 border border-dashed border-green-200 hover:bg-green-50 transition rounded-xl flex flex-col items-center justify-center cursor-pointer shrink-0">
+                    <input type="file" accept="image/*" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="window.uploadVariationImages(this)">
+                    <i class="ph-bold ph-plus text-green-700 text-lg"></i>
+                    <span class="text-[9px] font-bold text-green-700 mt-1">رفع صور</span>
+                </div>
+                <!-- Image list container -->
+                <div class="v-images-list flex flex-wrap gap-2">
+                    ${images.map(url => `
+                        <div class="v-image-item relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shrink-0 group">
+                            <img src="${url}" class="w-full h-full object-cover">
+                            <button type="button" onclick="this.closest('.v-image-item').remove()" class="absolute top-1 left-1 w-5 h-5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-[10px] shadow transition">
+                                <i class="ph ph-trash"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    container.appendChild(card);
+};
+
+window.removeVariationRow = function(btn) {
+    if (!confirm('هل أنت متأكد من حذف هذا اللون بالكامل؟')) return;
+    const card = btn.closest('.variation-card');
+    if (card) card.remove();
+};
+
+window.uploadVariationImages = async function(input) {
+    const files = input.files;
+    if (!files || files.length === 0) return;
+    
+    const card = input.closest('.variation-card');
+    const listContainer = card?.querySelector('.v-images-list');
+    if (!listContainer) return;
+    
+    showLoader('جاري رفع ومعالجة صور اللون...');
+    try {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const compressed = await compressImage(file);
+            
+            const ext = compressed.name.split('.').pop();
+            const fileName = `${Date.now()}_var_${Math.random().toString(36).substring(7)}.${ext}`;
+            
+            const { data, error } = await supabaseClient.storage.from('products').upload(fileName, compressed);
+            if (error) throw error;
+            
+            const { data: { publicUrl } } = supabaseClient.storage.from('products').getPublicUrl(fileName);
+            
+            // Append to DOM
+            const imgDiv = document.createElement('div');
+            imgDiv.className = 'v-image-item relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shrink-0 group';
+            imgDiv.innerHTML = `
+                <img src="${publicUrl}" class="w-full h-full object-cover">
+                <button type="button" onclick="this.closest('.v-image-item').remove()" class="absolute top-1 left-1 w-5 h-5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-[10px] shadow transition">
+                    <i class="ph ph-trash"></i>
+                </button>
+            `;
+            listContainer.appendChild(imgDiv);
+        }
+        AdminToast.show('تم رفع الصور بنجاح');
+    } catch(err) {
+        console.error(err);
+        AdminToast.show('حدث خطأ أثناء رفع الصور: ' + err.message, 'error');
+    } finally {
+        hideLoader();
+        input.value = ''; // Reset input
+    }
+};
+
 // ==================== Form Management ====================
 window.showForm = function() {
     document.getElementById('product-form').reset();
@@ -307,6 +450,14 @@ window.showForm = function() {
     document.getElementById('form-title').innerText = 'إضافة منتج جديد';
     currentFormImages = [];
     renderImagePreview();
+    
+    // Variations toggle reset
+    const hasVar = document.getElementById('p-has-variations');
+    if (hasVar) hasVar.checked = false;
+    window.toggleVariationsSection(false);
+    const container = document.getElementById('variations-container');
+    if (container) container.innerHTML = '';
+    
     document.getElementById('product-form-container').classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -318,6 +469,9 @@ window.hideForm = function() {
         if(img.type === 'new' && img.previewUrl) URL.revokeObjectURL(img.previewUrl);
     });
     currentFormImages = [];
+    
+    const container = document.getElementById('variations-container');
+    if (container) container.innerHTML = '';
 }
 
 window.editProduct = function(id) {
@@ -329,7 +483,39 @@ window.editProduct = function(id) {
     document.getElementById('p-price').value = product.price;
     document.getElementById('p-category').value = product.category;
     document.getElementById('p-stock').value = product.stock || 0;
-    document.getElementById('p-desc').value = product.description || '';
+    
+    // Parse variations from description
+    const rawDesc = product.description || '';
+    const descParts = rawDesc.split('===COLOR_VARIATIONS_JSON===');
+    const cleanDesc = descParts[0].trim();
+    document.getElementById('p-desc').value = cleanDesc;
+    
+    const hasVarInput = document.getElementById('p-has-variations');
+    const varContainer = document.getElementById('variations-container');
+    if (varContainer) varContainer.innerHTML = '';
+    
+    if (descParts.length > 1) {
+        try {
+            const variations = JSON.parse(descParts[1].trim());
+            if (Array.isArray(variations) && variations.length > 0) {
+                if (hasVarInput) hasVarInput.checked = true;
+                window.toggleVariationsSection(true);
+                // Clear default empty variation row created by toggleVariationsSection
+                if (varContainer) varContainer.innerHTML = '';
+                variations.forEach(v => window.addVariationRow(v));
+            } else {
+                if (hasVarInput) hasVarInput.checked = false;
+                window.toggleVariationsSection(false);
+            }
+        } catch(e) {
+            console.error("Error parsing variations on edit", e);
+            if (hasVarInput) hasVarInput.checked = false;
+            window.toggleVariationsSection(false);
+        }
+    } else {
+        if (hasVarInput) hasVarInput.checked = false;
+        window.toggleVariationsSection(false);
+    }
     
     const featInput = document.getElementById('p-featured');
     if (featInput) featInput.checked = product.is_featured || false;
@@ -394,8 +580,46 @@ const is_featured = (category === 'featured');
             }
         }
 
+        // Handle variations
+        let finalDescription = description;
+        let finalStock = stock;
+        
+        const hasVariations = document.getElementById('p-has-variations')?.checked;
+        if (hasVariations) {
+            const varCards = document.querySelectorAll('.variation-card');
+            const variations = [];
+            let totalVarStock = 0;
+            
+            varCards.forEach(card => {
+                const vName = card.querySelector('.v-name')?.value || '';
+                const vCode = card.querySelector('.v-color-hex')?.value || '#000000';
+                const vStock = parseInt(card.querySelector('.v-stock')?.value) || 0;
+                const vSku = card.querySelector('.v-sku')?.value || '';
+                const vPriceDiff = parseFloat(card.querySelector('.v-price-diff')?.value) || 0;
+                
+                const vImages = Array.from(card.querySelectorAll('.v-images-list img')).map(img => img.src);
+                
+                if (vName) {
+                    variations.push({
+                        name: vName,
+                        code: vCode,
+                        stock: vStock,
+                        sku: vSku,
+                        priceDiff: vPriceDiff,
+                        images: vImages
+                    });
+                    totalVarStock += vStock;
+                }
+            });
+            
+            if (variations.length > 0) {
+                finalDescription = `${description.trim()}\n\n===COLOR_VARIATIONS_JSON===\n${JSON.stringify(variations)}`;
+                finalStock = totalVarStock; // Set overall product stock to sum of color stocks
+            }
+        }
+
         const productData = { 
-            name, price, category, description, stock, is_featured, 
+            name, price, category, description: finalDescription, stock: finalStock, is_featured, 
             images: finalImages,
             imageurl: finalImages.length > 0 ? finalImages[0] : null // Backward compatibility
         };

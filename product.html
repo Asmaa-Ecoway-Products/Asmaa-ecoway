@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -189,10 +189,47 @@
                 return;
             }
 
-            document.title = product.name + ' - Asmaa Ecoway Products';
-            productImages = (product.images && product.images.length > 0) ? product.images : (product.imageurl ? [product.imageurl] : []);
+            // Decode variations
+            const desc = product.description || '';
+            const separator = '===COLOR_VARIATIONS_JSON===';
+            const parts = desc.split(separator);
+            
+            let cleanDescription = parts[0].trim();
+            let variations = [];
+            let hasVariations = false;
+            
+            if (parts.length > 1) {
+                try {
+                    variations = JSON.parse(parts[1].trim());
+                    hasVariations = Array.isArray(variations) && variations.length > 0;
+                } catch(e) {
+                    console.error("Error parsing variations JSON", e);
+                }
+            }
+            
+            const parsedProduct = {
+                ...product,
+                description: cleanDescription,
+                has_variations: hasVariations,
+                variations: variations
+            };
+
+            window._currentProduct = parsedProduct;
+            window._selectedColorIndex = 0;
+
+            document.title = parsedProduct.name + ' - Asmaa Ecoway Products';
+            
+            // Set initial images gallery based on default variation or main images
+            const initialVar = hasVariations ? parsedProduct.variations[0] : null;
+            productImages = initialVar && initialVar.images && initialVar.images.length > 0
+                ? initialVar.images
+                : ((parsedProduct.images && parsedProduct.images.length > 0) ? parsedProduct.images : (parsedProduct.imageurl ? [parsedProduct.imageurl] : []));
+                
             const mainImage = productImages[0] || '';
-            const stock = product.stock !== null ? product.stock : 1;
+            
+            // Set stock and price depending on active variation
+            const stock = initialVar ? initialVar.stock : (parsedProduct.stock !== null ? parsedProduct.stock : 1);
+            const price = initialVar ? (Number(parsedProduct.price) + Number(initialVar.priceDiff || 0)) : parsedProduct.price;
             const isOutOfStock = stock <= 0;
             const categoryNames = { 'home': 'فوط التنظيف', 'skin': 'تنظيف البشرة', 'perfume': 'شنط وعطور', 'natural': 'منظفات طبيعية', 'packages': 'باكدجات' };
 
@@ -208,48 +245,63 @@
                         <div class="lg:w-1/2">
                             <div class="relative group">
                                 <div class="w-full aspect-square bg-gray-100 rounded-2xl overflow-hidden border border-gray-200">
-                                    <img id="main-product-image" src="${mainImage}" alt="${product.name}" class="main-product-img">
+                                    <img id="main-product-image" src="${mainImage}" alt="${parsedProduct.name}" class="main-product-img">
                                 </div>
-                                ${productImages.length > 1 ? `
-                                <button onclick="changeMainImage(currentImageIndex - 1)" class="image-nav-btn prev opacity-0 group-hover:opacity-100 transition-opacity"><i class="ph-bold ph-caret-right"></i></button>
-                                <button onclick="changeMainImage(currentImageIndex + 1)" class="image-nav-btn next opacity-0 group-hover:opacity-100 transition-opacity"><i class="ph-bold ph-caret-left"></i></button>
-                                ` : ''}
+                                <button onclick="changeMainImage(currentImageIndex - 1)" class="image-nav-btn prev opacity-0 group-hover:opacity-100 transition-opacity" style="${productImages.length > 1 ? '' : 'display:none;'}"><i class="ph-bold ph-caret-right"></i></button>
+                                <button onclick="changeMainImage(currentImageIndex + 1)" class="image-nav-btn next opacity-0 group-hover:opacity-100 transition-opacity" style="${productImages.length > 1 ? '' : 'display:none;'}"><i class="ph-bold ph-caret-left"></i></button>
                             </div>
-                            ${productImages.length > 1 ? `<div class="flex gap-2 mt-4 overflow-x-auto pb-2">${thumbsHtml}</div>` : ''}
+                            <div id="thumbs-container" class="flex gap-2 mt-4 overflow-x-auto pb-2 ${productImages.length > 1 ? '' : 'hidden'}">${thumbsHtml}</div>
                         </div>
 
                         <!-- Product Info -->
                         <div class="lg:w-1/2 flex flex-col">
                             <nav class="text-sm text-gray-500 mb-3 flex gap-1">
                                 <a href="index.html" class="hover:text-brand-dark transition">الرئيسية</a> /
-                                <span class="text-gray-400">${categoryNames[product.category] || product.category}</span> /
-                                <span class="text-brand-dark font-semibold">${product.name}</span>
+                                <span class="text-gray-400">${categoryNames[parsedProduct.category] || parsedProduct.category}</span> /
+                                <span class="text-brand-dark font-semibold">${parsedProduct.name}</span>
                             </nav>
 
-                            <h1 class="text-3xl md:text-4xl font-black text-brand-dark mb-3">${product.name}</h1>
+                            <h1 class="text-3xl md:text-4xl font-black text-brand-dark mb-3">${parsedProduct.name}</h1>
 
                             <div class="flex items-center gap-2 mb-4">
                                 <div class="text-amber-400 text-lg">★★★★★</div>
                                 <span class="text-gray-500 text-sm">(5.0)</span>
                             </div>
 
-                            <div class="text-3xl font-bold text-brand-accent mb-4">${product.price} <span class="text-base font-normal text-gray-500">جنيه</span></div>
+                            <div id="product-price-display" class="text-3xl font-bold text-brand-accent mb-4">${price} <span class="text-base font-normal text-gray-500">جنيه</span></div>
 
                             <!-- Stock Badge -->
-                            <div class="mb-4">
+                            <div id="stock-badge-container" class="mb-4">
                                 ${isOutOfStock
                                     ? '<span class="bg-red-100 text-red-700 px-4 py-2 rounded-full text-sm font-bold inline-flex items-center gap-1"><i class="ph-fill ph-x-circle"></i> نفذ من المخزون</span>'
                                     : `<span class="bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-bold inline-flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> متوفر (${stock} قطعة)</span>`
                                 }
                             </div>
 
-                            ${product.description ? `
+                            ${parsedProduct.description ? `
                             <div class="bg-brand-light/30 p-5 rounded-xl border-r-4 border-brand-dark mb-6">
                                 <h2 class="text-sm font-bold text-gray-500 mb-2 flex items-center gap-1">
                                     <i class="ph-fill ph-quotes text-brand-dark"></i> عن هذا المنتج
                                 </h2>
-                                <div class="text-gray-700 leading-relaxed text-base" style="white-space: pre-line;">${product.description}</div>
+                                <div class="text-gray-700 leading-relaxed text-base" style="white-space: pre-line;">${parsedProduct.description}</div>
                             </div>` : ''}
+
+                            <!-- Colors Selection -->
+                            ${hasVariations ? `
+                            <div class="mb-6">
+                                <span class="font-bold text-gray-700 block mb-3">اختر اللون:</span>
+                                <div class="flex flex-wrap gap-3">
+                                    ${parsedProduct.variations.map((v, idx) => `
+                                        <button onclick="window.selectProductColor(${idx})" 
+                                            class="color-btn relative flex items-center gap-2 px-4 py-2 border rounded-full font-bold text-sm transition-all duration-300 hover:border-brand-accent ${idx === 0 ? 'border-brand-dark bg-brand-light/30 ring-2 ring-brand-dark/20' : 'border-gray-200 bg-white hover:scale-105'}"
+                                            id="color-btn-${idx}">
+                                            <span class="w-4 h-4 rounded-full border border-black/10 shrink-0 shadow-sm" style="background-color: ${v.code};"></span>
+                                            <span>${v.name}</span>
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            ` : ''}
 
                             <!-- Quantity -->
                             <div class="flex items-center gap-4 mb-6 ${isOutOfStock ? 'opacity-50 pointer-events-none' : ''}" id="product-stock" data-stock="${stock}">
@@ -262,7 +314,7 @@
                             </div>
 
                             <!-- Action Buttons -->
-                            <div class="flex flex-col sm:flex-row gap-3 mt-auto">
+                            <div id="action-buttons-container" class="flex flex-col sm:flex-row gap-3 mt-auto">
                                 ${isOutOfStock ? `
                                     <button disabled class="flex-1 bg-gray-300 text-gray-500 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed text-lg">
                                         <i class="ph ph-prohibit text-xl"></i> نفذ من المخزون
@@ -283,17 +335,147 @@
 
             document.getElementById('product-loading').classList.add('hidden');
             container.classList.remove('hidden');
-
-            // Store current product data for cart actions
-            window._currentProduct = product;
         }
+
+        window.selectProductColor = function(idx) {
+            const p = window._currentProduct;
+            if (!p || !p.variations || !p.variations[idx]) return;
+            
+            window._selectedColorIndex = idx;
+            const variation = p.variations[idx];
+            
+            // Update Buttons Active States
+            p.variations.forEach((_, i) => {
+                const btn = document.getElementById(`color-btn-${i}`);
+                if (btn) {
+                    if (i === idx) {
+                        btn.className = "color-btn relative flex items-center gap-2 px-4 py-2 border rounded-full font-bold text-sm transition-all duration-300 border-brand-dark bg-brand-light/30 ring-2 ring-brand-dark/20";
+                    } else {
+                        btn.className = "color-btn relative flex items-center gap-2 px-4 py-2 border rounded-full font-bold text-sm transition-all duration-300 border-gray-200 bg-white hover:scale-105";
+                    }
+                }
+            });
+            
+            // Update Gallery images
+            productImages = variation.images && variation.images.length > 0
+                ? variation.images
+                : ((p.images && p.images.length > 0) ? p.images : (p.imageurl ? [p.imageurl] : []));
+                
+            currentImageIndex = 0;
+            const mainImgEl = document.getElementById('main-product-image');
+            if (mainImgEl && productImages.length > 0) {
+                mainImgEl.src = productImages[0];
+            }
+            
+            // Re-render thumbnails
+            const thumbsContainer = document.getElementById('thumbs-container');
+            if (thumbsContainer) {
+                if (productImages.length > 1) {
+                    thumbsContainer.innerHTML = productImages.map((img, i) =>
+                        `<div class="thumb-item thumbnail ${i === 0 ? 'active' : ''}" onclick="changeMainImage(${i})"><img src="${img}" alt="صورة ${i + 1}"></div>`
+                    ).join('');
+                    thumbsContainer.classList.remove('hidden');
+                } else {
+                    thumbsContainer.innerHTML = '';
+                    thumbsContainer.classList.add('hidden');
+                }
+            }
+            
+            // Update Image Navigation Arrows visibility
+            const nextArrow = document.querySelector('.image-nav-btn.next');
+            const prevArrow = document.querySelector('.image-nav-btn.prev');
+            if (nextArrow && prevArrow) {
+                if (productImages.length > 1) {
+                    nextArrow.style.display = '';
+                    prevArrow.style.display = '';
+                } else {
+                    nextArrow.style.display = 'none';
+                    prevArrow.style.display = 'none';
+                }
+            }
+            
+            // Update Price (with price difference)
+            const finalPrice = Number(p.price) + Number(variation.priceDiff || 0);
+            const priceEl = document.getElementById('product-price-display');
+            if (priceEl) priceEl.innerHTML = `${finalPrice} <span class="text-base font-normal text-gray-500">جنيه</span>`;
+            
+            // Update Stock display
+            const vStock = variation.stock !== undefined ? variation.stock : 0;
+            const isOutOfStock = vStock <= 0;
+            const stockContainer = document.getElementById('stock-badge-container');
+            if (stockContainer) {
+                if (isOutOfStock) {
+                    stockContainer.innerHTML = '<span class="bg-red-100 text-red-700 px-4 py-2 rounded-full text-sm font-bold inline-flex items-center gap-1"><i class="ph-fill ph-x-circle"></i> نفذ من المخزون</span>';
+                } else {
+                    stockContainer.innerHTML = `<span class="bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-bold inline-flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> متوفر (${vStock} قطعة)</span>`;
+                }
+            }
+            
+            // Update quantity maximum limit based on variation stock
+            const stockEl = document.getElementById('product-stock');
+            if (stockEl) {
+                stockEl.dataset.stock = vStock;
+                if (isOutOfStock) {
+                    stockEl.classList.add('opacity-50', 'pointer-events-none');
+                } else {
+                    stockEl.classList.remove('opacity-50', 'pointer-events-none');
+                }
+            }
+            
+            // Reset quantity to 1 when changing color
+            currentQuantity = 1;
+            const qtyEl = document.getElementById('product-quantity');
+            if (qtyEl) qtyEl.textContent = '1';
+            
+            // Update Action Buttons disabled/enabled states
+            const actionButtonsContainer = document.getElementById('action-buttons-container');
+            if (actionButtonsContainer) {
+                if (isOutOfStock) {
+                    actionButtonsContainer.innerHTML = `
+                        <button disabled class="flex-1 bg-gray-300 text-gray-500 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed text-lg">
+                            <i class="ph ph-prohibit text-xl"></i> نفذ من المخزون
+                        </button>
+                    `;
+                } else {
+                    actionButtonsContainer.innerHTML = `
+                        <button onclick="addCurrentProduct()" class="flex-1 bg-[#2d5a27] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-800 active:scale-95 transition-all shadow-md text-lg">
+                            <i class="ph-bold ph-shopping-cart text-xl"></i> أضف للسلة
+                        </button>
+                        <button onclick="buyNow()" class="flex-1 border-2 border-[#2d5a27] text-[#2d5a27] py-3.5 rounded-xl font-bold hover:bg-[#2d5a27] hover:text-white transition-all text-lg">
+                            شراء الآن
+                        </button>
+                    `;
+                }
+            }
+        };
 
         async function addCurrentProduct() {
             const p = window._currentProduct;
             if (!p) return;
-            const mainImage = (p.images && p.images.length > 0) ? p.images[0] : (p.imageurl || '');
+            
+            let itemPrice = p.price;
+            let itemImage = (p.images && p.images.length > 0) ? p.images[0] : (p.imageurl || '');
+            let itemStock = p.stock;
+            let selectedColor = null;
+            
+            if (p.has_variations && p.variations && p.variations[window._selectedColorIndex]) {
+                const v = p.variations[window._selectedColorIndex];
+                itemPrice = Number(p.price) + Number(v.priceDiff || 0);
+                itemImage = (v.images && v.images.length > 0) ? v.images[0] : itemImage;
+                itemStock = v.stock;
+                selectedColor = { name: v.name, code: v.code };
+            }
+            
             if (window.CartSystem) {
-                await window.CartSystem.addItem({ id: p.id, name: p.name, price: p.price, image: mainImage, quantity: currentQuantity, stock: p.stock });
+                await window.CartSystem.addItem({
+                    id: p.id,
+                    name: p.name,
+                    price: itemPrice,
+                    image: itemImage,
+                    quantity: currentQuantity,
+                    stock: itemStock,
+                    selectedColor: selectedColor
+                });
             }
             currentQuantity = 1;
             const qtyEl = document.getElementById('product-quantity');
